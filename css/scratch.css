@@ -1,0 +1,39 @@
+
+    body {
+      background-color: #d2ecfc96;
+      font-family: Arial, sans-serif;
+      padding: 22px;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 30px;
+      
+    }
+
+    h1 {
+        color: rgb(11, 10, 10);
+      }
+      
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+      
+      .flex {
+        display: flex;
+        gap: 1rem;
+      }
+      
+      .grid {
+        display: grid;
+        gap: 1.5rem;
+      }
+      
+      .grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      <div class="header-box">Welcome to the Battleship Arena</div>
+<div class="info-panel">Click a cell to fire your shot!</div>
+<div class="action-box">Your turn! Take aim!</div>

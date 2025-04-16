@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Battleship Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0f172a;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #38bdf8;
+    }
+
+    .board-wrapper {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 20px;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 50px);
+      gap: 5px;
+    }
+
+    .cell {
+      width: 50px;
+      height: 50px;
+      background-color: #1e293b;
+      border: 2px solid #334155;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .cell.ship {
+      background-color: #22c55e;
+    }
+
+    .cell.hit {
+      background-color: #dc2626;
+    }
+
+    .cell.miss {
+      background-color: #475569;
+    }
+
+    .explosion::after {
+      content: "💥";
+      position: absolute;
+      font-size: 28px;
+      top: 6px;
+      left: 10px;
+      animation: explode 0.6s ease-out;
+    }
+
+    @keyframes explode {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    #message {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      color: #facc15;
+    }
+
+    #end-message {
+      display: none;
+      font-size: 2rem;
+      margin-top: 30px;
+    }
+
+    .firework {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #facc15;
+      border-radius: 50%;
+      animation: fireworks 1s linear forwards;
+    }
+
+    @keyframes fireworks {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(10); opacity: 0; }
+    }
+
+    #play-again {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #38bdf8;
+      color: #0f172a;
+      cursor: pointer;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>⚓ Battleship Duel</h1>
+  <div id="message">Place 2 ships on your board</div>
+
+  <div class="board-wrapper">
+    <div>
+      <h2>Your Board</h2>
+      <div id="player-board" class="board"></div>
+    </div>
+    <div>
+      <h2>Enemy Board</h2>
+      <div id="computer-board" class="board"></div>
+    </div>
+  </div>
+
+  <div id="end-message"></div>
+  <button id="play-again" onclick="location.reload()">Play Again</button>
+
+  <script>
+    const playerBoard = document.getElementById('player-board');
+    const computerBoard = document.getElementById('computer-board');
+    const message = document.getElementById('message');
+    const endMessage = document.getElementById('end-message');
+    const playAgainButton = document.getElementById('play-again');
+
+    const boardSize = 5;
+    const totalCells = boardSize * boardSize;
+    const shipCount = 2;
+
+    const playerCells = [];
+    const computerCells = [];
+
+    let playerShips = [];
+    let computerShips = [];
+
+    let playerHits = 0;
+    let computerHits = 0;
+
+    let gameStarted = false;
+    let playerTurn = true;
+
+    // Create boards
+    for (let i = 0; i < totalCells; i++) {
+      const pCell = document.createElement('div');
+      pCell.classList.add('cell');
+      pCell.dataset.index = i;
+      playerBoard.appendChild(pCell);
+      playerCells.push(pCell);
+
+      const cCell = document.createElement('div');
+      cCell.classList.add('cell');
+      cCell.dataset.index = i;
+      cCell.addEventListener('click', () => {
+        if (!gameStarted || !playerTurn || cCell.classList.contains('hit') || cCell.classList.contains('miss')) return;
+
+        const index = parseInt(cCell.dataset.index);
+        if (computerShips.includes(index)) {
+          cCell.classList.add('hit', 'explosion');
+          playerHits++;
+          if (playerHits === shipCount) return endGame("win");
+        } else {
+          cCell.classList.add('miss');
+        }
+        playerTurn = false;
+        message.textContent = "Computer's turn...";
+        setTimeout(computerMove, 1000);
+      });
+      computerBoard.appendChild(cCell);
+      computerCells.push(cCell);
+    }
+
+    // Let player place ships
+    playerCells.forEach(cell => {
+      cell.addEventListener('click', () => {
+        if (gameStarted || playerShips.length >= shipCount) return;
+        const index = parseInt(cell.dataset.index);
+        if (playerShips.includes(index)) return;
+        cell.classList.add('ship');
+        playerShips.push(index);
+        if (playerShips.length === shipCount) {
+          placeComputerShips();
+          gameStarted = true;
+          message.textContent = "Your turn! Click enemy board to fire!";
+        }
+      });
+    });
+
+    function placeComputerShips() {
+      while (computerShips.length < shipCount) {
+        const index = Math.floor(Math.random() * totalCells);
+        if (!computerShips.includes(index)) {
+          computerShips.push(index);
+        }
+      }
+    }
+
+    function computerMove() {
+      let guess;
+      do {
+        guess = Math.floor(Math.random() * totalCells);
+      } while (
+        playerCells[guess].classList.contains('hit') ||
+        playerCells[guess].classList.contains('miss')
+      );
+
+      if (playerShips.includes(guess)) {
+        playerCells[guess].classList.add('hit', 'explosion');
+        computerHits++;
+        if (computerHits === shipCount) return endGame("lose");
+      } else {
+        playerCells[guess].classList.add('miss');
+      }
+
+      playerTurn = true;
+      message.textContent = "Your turn! Click enemy board to fire!";
+    }
+
+    function endGame(result) {
+      gameStarted = false;
+      message.textContent = "";
+      playAgainButton.style.display = "inline-block";
+
+      if (result === "win") {
+        endMessage.textContent = "🎆 YOU WIN! 🎆";
+        endMessage.style.color = "#facc15";
+        endMessage.style.display = "block";
+        for (let i = 0; i < 25; i++) {
+          const fw = document.createElement('div');
+          fw.classList.add('firework');
+          fw.style.top = Math.random() * window.innerHeight + 'px';
+          fw.style.left = Math.random() * window.innerWidth + 'px';
+          fw.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+          document.body.appendChild(fw);
+          setTimeout(() => fw.remove(), 1000);
+        }
+      } else {
+        endMessage.textContent = "💀 YOU LOSE";
+        endMessage.style.color = "#f87171";
+        endMessage.style.display = "block";
+      }
+    }
+  </script>
+
+</body>
+</html>
